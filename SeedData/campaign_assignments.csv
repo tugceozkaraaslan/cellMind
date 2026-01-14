@@ -1,0 +1,4 @@
+assignment_id,user_id,campaign_id,score,status,assigned_at
+A-01,U3,C-03,92,ASSIGNED,2026-03-12T10:15:00Z
+A-02,U5,C-04,88,ASSIGNED,2026-03-12T10:18:00Z
+A-03,U2,C-02,70,ASSIGNED,2026-03-12T10:20:00Z

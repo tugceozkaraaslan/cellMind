@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turkcell Campaign Optimizer - Modern Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --border: #e5e7eb;
+            --text: #374151;
+            --text-light: #6b7280;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .header-content h1 {
+            color: var(--primary);
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-content p {
+            color: var(--text-light);
+            font-size: 1.1em;
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--light);
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .status-dot.offline {
+            background: var(--danger);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            background: white;
+            border-radius: 20px;
+            padding: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            border: none;
+            background: transparent;
+            color: var(--text-light);
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab:hover {
+            background: var(--light);
+            color: var(--primary);
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 28px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .stat-value {
+            color: var(--primary);
+            font-size: 2.8em;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-change {
+            margin-top: 12px;
+            font-size: 0.85em;
+            color: var(--text-light);
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .section {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .section-title {
+            color: var(--dark);
+            font-size: 1.8em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:hover {
+            background: var(--light);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 24px;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: var(--text-light);
+            line-height: 1;
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Alert */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid var(--danger);
+        }
+
+        /* Action Buttons in Tables */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Utility Classes */
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .gap-10 {
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-content">
+                <h1>🎯 Turkcell Campaign Optimizer</h1>
+                <p>Kişiselleştirilmiş Kampanya ve Etkileşim Yönetim Platformu</p>
+            </div>
+            <div class="api-status">
+                <span class="status-dot online" id="apiStatus"></span>
+                <span id="apiStatusText">API Bağlı</span>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+            <button class="tab" onclick="switchTab('campaigns')">🎯 Kampanyalar</button>
+            <button class="tab" onclick="switchTab('users')">👥 Kullanıcılar</button>
+            <button class="tab" onclick="switchTab('assignments')">✅ Atamalar</button>
+            <button class="tab" onclick="switchTab('analytics')">📈 Analitik</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="content-section active">
+            <!-- Stats Grid -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Toplam Kullanıcı</div>
+                        <div class="stat-icon">👥</div>
+                    </div>
+                    <div class="stat-value" id="totalUsers">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Aktif Kullanıcı</div>
+                        <div class="stat-icon">✓</div>
+                    </div>
+                    <div class="stat-value" id="activeUsers">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Aktif Kampanya</div>
+                        <div class="stat-icon">🎯</div>
+                    </div>
+                    <div class="stat-value" id="activeCampaigns">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Toplam Atama</div>
+                        <div class="stat-icon">📋</div>
+                    </div>
+                    <div class="stat-value" id="totalAssignments">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Başarı Oranı</div>
+                        <div class="stat-icon">📈</div>
+                    </div>
+                    <div class="stat-value" id="successRate">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Ortalama Skor</div>
+                        <div class="stat-icon">⭐</div>
+                    </div>
+                    <div class="stat-value" id="averageScore">-</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">⚡ Hızlı İşlemler</h2>
+                </div>
+                <div class="form-group">
+                    <label for="quickUserId">Kullanıcı ID:</label>
+                    <div class="flex gap-10">
+                        <input type="text" id="quickUserId" value="U003" placeholder="Örn: U003">
+                        <button class="btn btn-primary" onclick="quickAssignCampaign()">Kampanya Ata</button>
+                        <button class="btn btn-secondary" onclick="quickGetUserDetails()">Kullanıcı Detayları</button>
+                    </div>
+                </div>
+                <div id="quickResult"></div>
+            </div>
+        </div>
+
+        <!-- Campaigns Tab -->
+        <div id="campaigns" class="content-section">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">🎯 Kampanya Yönetimi</h2>
+                    <button class="btn btn-primary" onclick="openCreateCampaignModal()">+ Yeni Kampanya</button>
+                </div>
+                <button class="btn btn-secondary mb-20" onclick="loadCampaigns()">🔄 Yenile</button>
+                <div id="campaignsTable"></div>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="users" class="content-section">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">👥 Kullanıcı Yönetimi</h2>
+                </div>
+                <div class="form-group">
+                    <label>Segment Filtrele:</label>
+                    <select id="segmentFilter" onchange="loadUsers()">
+                        <option value="">Tümü</option>
+                        <option value="HIGH_USAGE">HIGH_USAGE</option>
+                        <option value="MEDIUM_USAGE">MEDIUM_USAGE</option>
+                        <option value="LOW_USAGE">LOW_USAGE</option>
+                    </select>
+                </div>
+                <button class="btn btn-secondary mb-20" onclick="loadUsers()">🔄 Yenile</button>
+                <div id="usersTable"></div>
+            </div>
+        </div>
+
+        <!-- Assignments Tab -->
+        <div id="assignments" class="content-section">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">✅ Kampanya Atamaları</h2>
+                </div>
+                <div class="form-group">
+                    <label>Durum Filtrele:</label>
+                    <select id="statusFilter" onchange="loadAssignments()">
+                        <option value="">Tümü</option>
+                        <option value="ASSIGNED">ASSIGNED</option>
+                        <option value="USED">USED</option>
+                        <option value="EXPIRED">EXPIRED</option>
+                    </select>
+                </div>
+                <button class="btn btn-secondary mb-20" onclick="loadAssignments()">🔄 Yenile</button>
+                <div id="assignmentsTable"></div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics" class="content-section">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">📈 Kampanya Kullanım Oranları</h2>
+                </div>
+                <button class="btn btn-secondary mb-20" onclick="loadCampaignUsageRates()">🔄 Yenile</button>
+                <div id="usageRatesTable"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">📊 Günlük Kampanya Dağılımı</h2>
+                </div>
+                <div class="form-group">
+                    <label>Gün Sayısı:</label>
+                    <select id="daysFilter" onchange="loadDailyDistribution()">
+                        <option value="7">Son 7 Gün</option>
+                        <option value="14">Son 14 Gün</option>
+                        <option value="30">Son 30 Gün</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="dailyDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Campaign Modal -->
+    <div id="createCampaignModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Yeni Kampanya Ekle</h3>
+                <button class="close-btn" onclick="closeCreateCampaignModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Kampanya Tipi:</label>
+                <input type="text" id="newCampaignType" placeholder="Örn: DATA_BOOST">
+            </div>
+            <div class="form-group">
+                <label>Hedef Segment:</label>
+                <select id="newCampaignSegment">
+                    <option value="HIGH_USAGE">HIGH_USAGE</option>
+                    <option value="MEDIUM_USAGE">MEDIUM_USAGE</option>
+                    <option value="LOW_USAGE">LOW_USAGE</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Öncelik (1 = En Yüksek):</label>
+                <input type="number" id="newCampaignPriority" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label>Başlangıç Tarihi:</label>
+                <input type="date" id="newCampaignStartDate">
+            </div>
+            <div class="form-group">
+                <label>Bitiş Tarihi:</label>
+                <input type="date" id="newCampaignEndDate">
+            </div>
+            <div class="flex gap-10">
+                <button class="btn btn-primary" onclick="createCampaign()">Kaydet</button>
+                <button class="btn btn-secondary" onclick="closeCreateCampaignModal()">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = '/api';
+        let dailyChart = null;
+
+        // Initialize
+        window.addEventListener('load', () => {
+            loadDashboardSummary();
+            loadCampaigns();
+            loadUsers();
+            loadAssignments();
+            loadCampaignUsageRates();
+            loadDailyDistribution();
+        });
+
+        // Tab Switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+
+            // Load data when switching to analytics
+            if (tabName === 'analytics') {
+                loadCampaignUsageRates();
+                loadDailyDistribution();
+            }
+        }
+
+        // Dashboard Summary
+        async function loadDashboardSummary() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/dashboard/summary`);
+                const data = await response.json();
+
+                document.getElementById('totalUsers').textContent = data.totalUsers;
+                document.getElementById('activeUsers').textContent = data.activeUsers;
+                document.getElementById('activeCampaigns').textContent = data.activeCampaigns;
+                document.getElementById('totalAssignments').textContent = data.totalAssignments;
+                document.getElementById('successRate').textContent = data.successRate.toFixed(1) + '%';
+                document.getElementById('averageScore').textContent = data.averageScore.toFixed(2);
+
+                document.getElementById('apiStatus').className = 'status-dot online';
+                document.getElementById('apiStatusText').textContent = 'API Bağlı';
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                document.getElementById('apiStatus').className = 'status-dot offline';
+                document.getElementById('apiStatusText').textContent = 'API Bağlantı Hatası';
+            }
+        }
+
+        // Quick Actions
+        async function quickAssignCampaign() {
+            const userId = document.getElementById('quickUserId').value;
+            const resultDiv = document.getElementById('quickResult');
+            
+            if (!userId) {
+                resultDiv.innerHTML = '<div class="alert alert-error">Lütfen bir kullanıcı ID girin!</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="loading"></div> İşleniyor...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/assign`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            ✅ Kampanya başarıyla atandı!<br>
+                            <strong>${data.assignment.userName}</strong> kullanıcısına 
+                            <strong>${data.assignment.campaignType}</strong> kampanyası atandı. 
+                            Skor: ${data.assignment.score.toFixed(2)}
+                        </div>
+                    `;
+                    loadDashboardSummary();
+                    loadAssignments();
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-error">${data.message}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-error">Hata: ${error.message}</div>`;
+            }
+        }
+
+        async function quickGetUserDetails() {
+            const userId = document.getElementById('quickUserId').value;
+            const resultDiv = document.getElementById('quickResult');
+            
+            if (!userId) {
+                resultDiv.innerHTML = '<div class="alert alert-error">Lütfen bir kullanıcı ID girin!</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="loading"></div> Yükleniyor...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/${userId}`);
+                const data = await response.json();
+
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Kullanıcı Bilgileri:</strong><br>
+                        ID: ${data.userId} | Ad: ${data.name} | Şehir: ${data.city}<br>
+                        Segment: <span class="badge badge-info">${data.segment}</span><br>
+                        Veri: ${data.monthlyDataGb} GB | Harcama: ${data.monthlySpendTry} TRY | Sadakat: ${data.loyaltyYears} yıl<br>
+                        <strong>Skor: ${data.score ? data.score.toFixed(2) : 'Hesaplanamadı'}</strong>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-error">Hata: ${error.message}</div>`;
+            }
+        }
+
+        // Load Campaigns
+        async function loadCampaigns() {
+            const tableDiv = document.getElementById('campaignsTable');
+            tableDiv.innerHTML = '<div class="loading"></div> Yükleniyor...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/campaigns?page=1&pageSize=100`);
+                const data = await response.json();
+
+                let html = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tip</th>
+                                    <th>Segment</th>
+                                    <th>Öncelik</th>
+                                    <th>Başlangıç</th>
+                                    <th>Bitiş</th>
+                                    <th>Durum</th>
+                                    <th>Atama</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                data.data.forEach(campaign => {
+                    html += `
+                        <tr>
+                            <td><strong>${campaign.campaignId}</strong></td>
+                            <td>${campaign.type}</td>
+                            <td><span class="badge badge-info">${campaign.targetSegment}</span></td>
+                            <td><strong>${campaign.priority}</strong></td>
+                            <td>${new Date(campaign.startDate).toLocaleDateString('tr-TR')}</td>
+                            <td>${new Date(campaign.endDate).toLocaleDateString('tr-TR')}</td>
+                            <td>
+                                <span class="badge ${campaign.isActive ? 'badge-success' : 'badge-warning'}">
+                                    ${campaign.isActive ? 'Aktif' : 'Pasif'}
+                                </span>
+                            </td>
+                            <td><strong>${campaign.assignmentCount}</strong></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-sm ${campaign.isActive ? 'btn-danger' : 'btn-success'}" 
+                                            onclick="toggleCampaign('${campaign.campaignId}')">
+                                        ${campaign.isActive ? 'Pasif Yap' : 'Aktif Yap'}
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" 
+                                            onclick="openPriorityModal('${campaign.campaignId}', ${campaign.priority})">
+                                        Öncelik
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-center mt-20" style="color: var(--text-light);">
+                        Toplam ${data.pagination.totalItems} kampanya
+                    </p>
+                `;
+
+                tableDiv.innerHTML = html;
+            } catch (error) {
+                tableDiv.innerHTML = `<div class="alert alert-error">Hata: ${error.message}</div>`;
+            }
+        }
+
+        // Load Users
+        async function loadUsers() {
+            const tableDiv = document.getElementById('usersTable');
+            const segment = document.getElementById('segmentFilter').value;
+            tableDiv.innerHTML = '<div class="loading"></div> Yükleniyor...';
+
+            try {
+                const url = segment 
+                    ? `${API_BASE_URL}/users?page=1&pageSize=100&segment=${segment}`
+                    : `${API_BASE_URL}/users?page=1&pageSize=100`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                let html = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Ad</th>
+                                    <th>Şehir</th>
+                                    <th>Segment</th>
+                                    <th>Veri (GB)</th>
+                                    <th>Harcama (TRY)</th>
+                                    <th>Sadakat</th>
+                                    <th>Skor</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                data.data.forEach(user => {
+                    html += `
+                        <tr>
+                            <td><strong>${user.userId}</strong></td>
+                            <td>${user.name}</td>
+                            <td>${user.city}</td>
+                            <td><span class="badge badge-info">${user.segment}</span></td>
+                            <td>${user.monthlyDataGb || '-'}</td>
+                            <td>${user.monthlySpendTry || '-'}</td>
+                            <td>${user.loyaltyYears ? user.loyaltyYears + ' yıl' : '-'}</td>
+                            <td><strong>${user.score ? user.score.toFixed(2) : '-'}</strong></td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="assignToUser('${user.userId}')">
+                                    Kampanya Ata
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-center mt-20" style="color: var(--text-light);">
+                        Toplam ${data.pagination.totalItems} kullanıcı
+                    </p>
+                `;
+
+                tableDiv.innerHTML = html;
+            } catch (error) {
+                tableDiv.innerHTML = `<div class="alert alert-error">Hata: ${error.message}</div>`;
+            }
+        }
+
+        // Load Assignments
+        async function loadAssignments() {
+            const tableDiv = document.getElementById('assignmentsTable');
+            const status = document.getElementById('statusFilter').value;
+            tableDiv.innerHTML = '<div class="loading"></div> Yükleniyor...';
+
+            try {
+                const url = status
+                    ? `${API_BASE_URL}/assignments?page=1&pageSize=100&status=${status}`
+                    : `${API_BASE_URL}/assignments?page=1&pageSize=100`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                let html = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Kullanıcı</th>
+                                    <th>Kampanya</th>
+                                    <th>Skor</th>
+                                    <th>Durum</th>
+                                    <th>Tarih</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                data.data.forEach(assignment => {
+                    const statusBadge = assignment.status === 'USED' ? 'badge-success' :
+                                       assignment.status === 'EXPIRED' ? 'badge-danger' : 'badge-info';
+                    
+                    html += `
+                        <tr>
+                            <td><strong>${assignment.assignmentId}</strong></td>
+                            <td>${assignment.userName} (${assignment.userId})</td>
+                            <td>${assignment.campaignType}</td>
+                            <td><strong>${assignment.score.toFixed(2)}</strong></td>
+                            <td><span class="badge ${statusBadge}">${assignment.status}</span></td>
+                            <td>${new Date(assignment.assignedAt).toLocaleString('tr-TR')}</td>
+                            <td>
+                                ${assignment.status === 'ASSIGNED' ? `
+                                    <button class="btn btn-sm btn-success" onclick="updateStatus(${assignment.assignmentId}, 'USED')">
+                                        Kullanıldı
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="updateStatus(${assignment.assignmentId}, 'EXPIRED')">
+                                        Süresi Doldu
+                                    </button>
+                                ` : '-'}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-center mt-20" style="color: var(--text-light);">
+                        Toplam ${data.pagination.totalItems} atama
+                    </p>
+                `;
+
+                tableDiv.innerHTML = html;
+            } catch (error) {
+                tableDiv.innerHTML = `<div class="alert alert-error">Hata: ${error.message}</div>`;
+            }
+        }
+
+        // Load Campaign Usage Rates
+        async function loadCampaignUsageRates() {
+            const tableDiv = document.getElementById('usageRatesTable');
+            tableDiv.innerHTML = '<div class="loading"></div> Yükleniyor...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/dashboard/campaign-usage-rates`);
+                const data = await response.json();
+
+                let html = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Kampanya ID</th>
+                                    <th>Tip</th>
+                                    <th>Segment</th>
+                                    <th>Toplam</th>
+                                    <th>Atandı</th>
+                                    <th>Kullanıldı</th>
+                                    <th>Süresi Doldu</th>
+                                    <th>Kullanım Oranı</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                data.forEach(campaign => {
+                    const usageColor = campaign.usageRate >= 50 ? 'badge-success' :
+                                      campaign.usageRate >= 25 ? 'badge-warning' : 'badge-danger';
+                    
+                    html += `
+                        <tr>
+                            <td><strong>${campaign.campaignId}</strong></td>
+                            <td>${campaign.campaignType}</td>
+                            <td><span class="badge badge-info">${campaign.targetSegment}</span></td>
+                            <td><strong>${campaign.totalAssignments}</strong></td>
+                            <td>${campaign.assignedCount}</td>
+                            <td>${campaign.usedCount}</td>
+                            <td>${campaign.expiredCount}</td>
+                            <td>
+                                <span class="badge ${usageColor}">
+                                    ${campaign.usageRate.toFixed(1)}%
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                tableDiv.innerHTML = html;
+            } catch (error) {
+                tableDiv.innerHTML = `<div class="alert alert-error">Hata: ${error.message}</div>`;
+            }
+        }
+
+        // Load Daily Distribution
+        async function loadDailyDistribution() {
+            const days = document.getElementById('daysFilter')?.value || 7;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/dashboard/daily-distribution?days=${days}`);
+                const data = await response.json();
+
+                const ctx = document.getElementById('dailyDistributionChart').getContext('2d');
+                
+                if (dailyChart) {
+                    dailyChart.destroy();
+                }
+
+                dailyChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => new Date(d.date).toLocaleDateString('tr-TR')),
+                        datasets: [
+                            {
+                                label: 'Toplam Atama',
+                                data: data.map(d => d.totalAssignments),
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Atandı',
+                                data: data.map(d => d.assignedCount),
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Kullanıldı',
+                                data: data.map(d => d.usedCount),
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Süresi Doldu',
+                                data: data.map(d => d.expiredCount),
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: `Son ${days} Günlük Kampanya Dağılımı`
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading daily distribution:', error);
+            }
+        }
+
+        // Campaign Management
+        function openCreateCampaignModal() {
+            document.getElementById('createCampaignModal').classList.add('active');
+            const today = new Date().toISOString().split('T')[0];
+            const nextMonth = new Date();
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            const nextMonthStr = nextMonth.toISOString().split('T')[0];
+            
+            document.getElementById('newCampaignStartDate').value = today;
+            document.getElementById('newCampaignEndDate').value = nextMonthStr;
+        }
+
+        function closeCreateCampaignModal() {
+            document.getElementById('createCampaignModal').classList.remove('active');
+        }
+
+        async function createCampaign() {
+            const type = document.getElementById('newCampaignType').value;
+            const segment = document.getElementById('newCampaignSegment').value;
+            const priority = parseInt(document.getElementById('newCampaignPriority').value);
+            const startDate = document.getElementById('newCampaignStartDate').value;
+            const endDate = document.getElementById('newCampaignEndDate').value;
+
+            if (!type || !startDate || !endDate) {
+                alert('Lütfen tüm alanları doldurun!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/campaigns`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type,
+                        targetSegment: segment,
+                        priority,
+                        startDate,
+                        endDate
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Kampanya başarıyla oluşturuldu!');
+                    closeCreateCampaignModal();
+                    loadCampaigns();
+                    loadDashboardSummary();
+                } else {
+                    const err = await response.text();
+                    alert('Hata: ' + err);
+                }
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            }
+        }
+
+        async function toggleCampaign(campaignId) {
+            if (!confirm('Kampanya durumunu değiştirmek istediğinize emin misiniz?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/campaigns/${campaignId}/toggle`, {
+                    method: 'PATCH'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message);
+                    loadCampaigns();
+                    loadDashboardSummary();
+                } else {
+                    alert('Hata: ' + data.message);
+                }
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            }
+        }
+
+        function openPriorityModal(campaignId, currentPriority) {
+            const newPriority = prompt(`Yeni öncelik değeri girin (1 = En Yüksek):`, currentPriority);
+            if (newPriority && !isNaN(newPriority) && parseInt(newPriority) > 0) {
+                updatePriority(campaignId, parseInt(newPriority));
+            }
+        }
+
+        async function updatePriority(campaignId, priority) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/campaigns/${campaignId}/priority`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ priority })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message);
+                    loadCampaigns();
+                } else {
+                    alert('Hata: ' + data.message);
+                }
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            }
+        }
+
+        // Assignment Actions
+        async function assignToUser(userId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/assign`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`Kampanya başarıyla atandı!\n${data.assignment.campaignType} - Skor: ${data.assignment.score.toFixed(2)}`);
+                    loadAssignments();
+                    loadDashboardSummary();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            }
+        }
+
+        async function updateStatus(assignmentId, newStatus) {
+            if (!confirm(`Atama durumunu "${newStatus}" olarak güncellemek istediğinize emin misiniz?`)) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/status-update`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ assignmentId, newStatus })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message);
+                    loadAssignments();
+                    loadDashboardSummary();
+                } else {
+                    alert('Hata: ' + data.message);
+                }
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            }
+        }
+
+        // Auto-refresh dashboard every 30 seconds
+        setInterval(() => {
+            if (document.getElementById('dashboard').classList.contains('active')) {
+                loadDashboardSummary();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
+

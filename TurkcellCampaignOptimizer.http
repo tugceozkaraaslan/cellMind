@@ -1,0 +1,6 @@
+@TurkcellCampaignOptimizer_HostAddress = http://localhost:5014
+
+GET {{TurkcellCampaignOptimizer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
